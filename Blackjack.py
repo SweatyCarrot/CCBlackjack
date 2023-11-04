@@ -5,10 +5,29 @@ class InvalidInput(Exception):
 
 class GameState():
     deck = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, "A"]
+    players = []
 
     def __init__(self, pot = 0):
         self.pot = pot
-
+    
+    def initial_wallet(self):
+        while True:
+            try:
+                wallet = int(input("What would you like your wallet to be? (Must be lower than $1000): $"))
+                if wallet > 0 and wallet < 1000:
+                    return wallet
+                else:
+                    raise InvalidInput
+            except InvalidInput:
+                print("Invalid Input")
+            except:
+                print("Invalid Input")
+                
+    def deal(self):
+        for object in GameState.players:
+            for i in range(2):
+                object.update_hand([random.choice(GameState.deck)])
+        print("Cards have been dealt!")
 
 class Player():
 
@@ -19,7 +38,8 @@ class Player():
         self.stand = False
         self.bust = False
         self.out = False
-  
+        GameState.players.append(self)
+
     def get_wallet(self):
         return self.wallet
 
@@ -60,18 +80,18 @@ class Player():
             try:
                 bet_amount = input("Please enter your bet: ")
                 bet_amount = int(bet_amount)
-                if bet_amount <= self.get_wallet():
+                if bet_amount <= self.get_wallet() and bet_amount > 0:
                     self.update_bet(bet_amount)
                     self.update_wallet(bet_amount, False)
                     break
                 else:
                     raise InvalidInput
-            except:
+            except InvalidInput:
                 print("Invalid input.")
                 continue
 
     def hit(self):
-        self.update_hand([random.choice(gamestate.deck)])
+        self.update_hand([random.choice(GameState.deck)])
         print("Your hand is now: " + str(self.get_hand()))
     
     def stay(self):
@@ -79,31 +99,36 @@ class Player():
         self.stand = True
     
     def turn_logic(self):
-        #CHECK FOR BLACKJACK BEFORE STARTING
-        print("Your current hand is " + str(self.get_hand()) + "\n Would you like to Hit or Stand?")
-        while self.get_hand_value() <= 21 and self.bust == False and self.stand == False:
-            if self.get_hand_value() == 21:
+        if self.get_hand_value == 21:
+                print("Your hand is " + str(self.get_hand()))
                 print("Blackjack!")
-                self.stay()
-            else:
-                action = input("Hit or Stand: ").lower()
-                if action == "hit":
-                    self.hit()
-                    if self.get_hand_value() < 21:
-                        continue
-                    else:
-                        print("You bust!")
-                        self.bust = True
-                elif action == "stand":
+        else:
+            print("Your current hand is " + str(self.get_hand()) + "\nWould you like to Hit or Stand?")
+            while self.get_hand_value() <= 21 and self.bust == False and self.stand == False:
+                if self.get_hand_value() == 21:
+                    print("Your hand is " + str(self.get_hand()))
+                    print("Blackjack!")
                     self.stay()
                 else:
-                    print("Invalid Input")
+                    action = input("Hit or Stand: ").lower()
+                    if action == "hit":
+                        self.hit()
+                        if self.get_hand_value() < 21:
+                            continue
+                        else:
+                            print("You bust!")
+                            self.bust = True
+                    elif action == "stand":
+                        self.stay()
+                    else:
+                        print("Invalid Input")
 
 class Dealer():
 
     def __init__(self):
         self.hand = []
         self.bust = False
+        GameState.players.append(self)
     
     def get_hand_half(self):
         return self.hand[1:]
@@ -116,17 +141,29 @@ class Dealer():
             self.hand.append(card)
 
     def hit(self):
-        self.update_hand([random.choice(gamestate.deck)])
+        self.update_hand([random.choice(GameState.deck)])
         print("Dealer's hand is now: " + str(self.get_hand()))
 
     def stay(self):
         print("Dealer stands on " + str(self.get_hand_value()) + ".")
 
 
+def main():
+    gamestate = GameState()
 
-gamestate = GameState()
+    player_wallet = gamestate.initial_wallet()
 
-player = Player(100)
+    player = Player(player_wallet)
+    dealer = Dealer()
 
-player.take_bet()
-player.turn_logic()
+    while player.out == False:
+        player.take_bet()
+        gamestate.deal()
+        print("The dealer is showing [?]" + str(dealer.get_hand_half()))
+        player.turn_logic()
+        ##DEALER TURN LOGIC HERE
+        ##REVEAL HANDS
+        ##CHECK WINNER
+        ##DISTRIBUTE POT, CLEAR HANDS
+        
+main()
