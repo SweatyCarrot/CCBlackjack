@@ -49,18 +49,36 @@ class Player():
         else:
             self.wallet -= value
 
-    def get_hand(self):
-        return self.hand
-
     def update_hand(self, cards):
         for card in cards:
             self.hand.append(card)
+    
+    def clear_hand(self):
+        self.hand = []
+        self.stand = False
+        self.bust = False
 
     def get_bet(self):
         return self.bet
 
     def update_bet(self, value):
         self.bet += value
+    
+    def get_hand(self):
+        sorted_hand = []
+        ace_count = 0
+        for i in range(len(self.hand)):
+            if self.hand[i] == "A":
+                ace_count += 1
+                sorted_hand.append(self.hand[i])
+            else:
+                sorted_hand.append(self.hand[i])
+                continue
+        for i in range(ace_count):
+            sorted_hand.remove("A")
+            sorted_hand.append("A")
+        return sorted_hand
+
     
     def get_hand_value(self):
         hand_value = 0
@@ -87,7 +105,10 @@ class Player():
                     break
                 else:
                     raise InvalidInput
-            except InvalidInput:
+            except KeyboardInterrupt:
+                print("Keyboard Interrupt")
+                exit()
+            except:
                 print("Invalid input.")
                 continue
 
@@ -95,7 +116,6 @@ class Player():
         self.update_hand([random.choice(GameState.deck)])
         print("Your hand is now: " + str(self.get_hand()) + ". Hand value: " + str(self.get_hand_value()))
 
-    
     def stay(self):
         print("You stand on " + str(self.get_hand_value()) + ".")
         self.stand = True
@@ -105,7 +125,7 @@ class Player():
                 print("Your hand is " + str(self.get_hand()))
                 print("Blackjack!")
         else:
-            print("Your current hand is " + str(self.get_hand()) + "\nWould you like to Hit or Stand?")
+            print("Your current hand is " + str(self.get_hand()) + ". Hand value: " + str(self.get_hand_value()) + "\nWould you like to Hit or Stand?")
             while self.get_hand_value() <= 21 and self.bust == False and self.stand == False:
                 if self.get_hand_value() == 21:
                     print("Your hand is " + str(self.get_hand()))
@@ -115,7 +135,7 @@ class Player():
                     action = input("Hit or Stand: ").lower()
                     if action == "hit":
                         self.hit()
-                        if self.get_hand_value() < 21:
+                        if self.get_hand_value() <= 21:
                             continue
                         else:
                             print("You bust!")
@@ -137,7 +157,19 @@ class Dealer():
         return self.hand[1:]
 
     def get_hand_full(self):
-        return self.hand
+        sorted_hand = []
+        ace_count = 0
+        for i in range(len(self.hand)):
+            if self.hand[i] == "A":
+                ace_count += 1
+                sorted_hand.append(self.hand[i])
+            else:
+                sorted_hand.append(self.hand[i])
+                continue
+        for i in range(ace_count):
+            sorted_hand.remove("A")
+            sorted_hand.append("A")
+        return sorted_hand
 
     def update_hand(self, cards):
         for card in cards:
@@ -145,7 +177,7 @@ class Dealer():
 
     def hit(self):
         self.update_hand([random.choice(GameState.deck)])
-        print("Dealer's hand is now: " + str(self.get_hand()))
+        print("Dealer's hand is now: " + str(self.get_hand_half()))
 
     def stay(self):
         print("Dealer stands on " + str(self.get_hand_value()) + ".")
@@ -167,6 +199,7 @@ def main():
         gamestate.deal()
         print("The dealer is showing [?]" + str(dealer.get_hand_half()))
         player.turn_logic()
+        player.clear_hand()
         ##DEALER TURN LOGIC HERE
         ##REVEAL HANDS
         ##CHECK WINNER
