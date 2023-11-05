@@ -4,7 +4,7 @@ class InvalidInput(Exception):
     pass
 
 class GameState():
-    deck = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, "A"]
+    deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, "A"]
     players = []
 
     def __init__(self, pot = 0):
@@ -64,6 +64,7 @@ class Player():
     
     def get_hand_value(self):
         hand_value = 0
+        #SORT THIS LIST
         for card in self.get_hand():
             if card == "A":
                 if hand_value + 11 > 21:
@@ -92,7 +93,8 @@ class Player():
 
     def hit(self):
         self.update_hand([random.choice(GameState.deck)])
-        print("Your hand is now: " + str(self.get_hand()))
+        print("Your hand is now: " + str(self.get_hand()) + ". Hand value: " + str(self.get_hand_value()))
+
     
     def stay(self):
         print("You stand on " + str(self.get_hand_value()) + ".")
@@ -124,6 +126,7 @@ class Player():
                         print("Invalid Input")
 
 class Dealer():
+    risk = 0.25
 
     def __init__(self):
         self.hand = []
@@ -146,6 +149,9 @@ class Dealer():
 
     def stay(self):
         print("Dealer stands on " + str(self.get_hand_value()) + ".")
+    
+    def turn_logic(self):
+        pass
 
 
 def main():
