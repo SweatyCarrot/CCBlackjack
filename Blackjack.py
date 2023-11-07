@@ -22,16 +22,58 @@ class GameState():
                 print("Invalid Input")
             except:
                 print("Invalid Input")
+
+    def collect_bets(self):
+        for p in GameState.players:
+            self.pot += p.get_bet()
                 
     def deal(self):
         for object in GameState.players:
             for i in range(2):
                 object.update_hand([random.choice(GameState.deck)])
         print("Cards have been dealt!")
+    
+    def reveal(self):
+        print("Let's reveal!")
+        for player in GameState.players:
+            print(player.name + " has " + str(player.get_hand()) + " with a value of " + str(player.get_hand_value()))
+    
+    def calculate_winner(self):
+        winner = ""
+        score = 0
+        for p in GameState.players:
+            if p.bust == False and p.get_hand_value() > score:
+                score = p.get_hand_value()
+                winner = p
+        if winner == "":
+            print("No winner! Returning bets!")
+            for p in GameState.players:
+                p.wallet += p.bet
+        else:
+            print(self.pot)
+            if len(GameState.players) == 2:
+                self.pot += self.pot
+            print(winner.name + " has won the round! They win " + str(self.pot))
+            winner.wallet += self.pot
+
+    def clear_hands(self):
+        self.pot = 0
+        for p in GameState.players:
+            p.bet = 0
+            p.hand = []
+            p.stand = False
+            p.bust = False
+    
+    def check_outs(self):
+        for p in GameState.players:
+            if p.get_wallet() <= 0:
+                p.out = True
+
 
 class Player():
 
     def __init__(self, wallet):
+        self.name = "Player1"
         self.wallet = wallet
         self.hand = []
         self.bet = 0
@@ -65,33 +107,16 @@ class Player():
         self.bet += value
     
     def get_hand(self):
-        sorted_hand = []
-        ace_count = 0
-        for i in range(len(self.hand)):
-            if self.hand[i] == "A":
-                ace_count += 1
-                sorted_hand.append(self.hand[i])
-            else:
-                sorted_hand.append(self.hand[i])
-                continue
-        for i in range(ace_count):
-            sorted_hand.remove("A")
-            sorted_hand.append("A")
-        return sorted_hand
+        return self.hand
 
     
     def get_hand_value(self):
-        hand_value = 0
-        #SORT THIS LIST
-        for card in self.get_hand():
-            if card == "A":
-                if hand_value + 11 > 21:
-                    hand_value += 1
-                else:
-                    hand_value += 11
-            else:
-                hand_value += card
-        return hand_value
+        replaced_hand = [11 if card == 'A' else card for card in self.get_hand()]
+        while sum(replaced_hand) > 21 and 11 in replaced_hand:
+            replaced_hand.append(1)
+            replaced_hand.remove(11)
+        return sum(replaced_hand)
+
 
     def take_bet(self):
         print("Your current wallet is " + str(self.get_wallet()) + ".")
@@ -128,7 +153,6 @@ class Player():
             print("Your current hand is " + str(self.get_hand()) + ". Hand value: " + str(self.get_hand_value()) + "\nWould you like to Hit or Stand?")
             while self.get_hand_value() <= 21 and self.bust == False and self.stand == False:
                 if self.get_hand_value() == 21:
-                    print("Your hand is " + str(self.get_hand()))
                     print("Blackjack!")
                     self.stay()
                 else:
@@ -149,27 +173,38 @@ class Dealer():
     risk = 0.25
 
     def __init__(self):
+        self.name = "Dealer"
+        self.wallet = 0
         self.hand = []
         self.bust = False
+        self.stand = False
         GameState.players.append(self)
     
     def get_hand_half(self):
         return self.hand[1:]
 
-    def get_hand_full(self):
-        sorted_hand = []
-        ace_count = 0
-        for i in range(len(self.hand)):
-            if self.hand[i] == "A":
-                ace_count += 1
-                sorted_hand.append(self.hand[i])
-            else:
-                sorted_hand.append(self.hand[i])
-                continue
-        for i in range(ace_count):
-            sorted_hand.remove("A")
-            sorted_hand.append("A")
-        return sorted_hand
+    def get_hand(self):
+        return self.hand
+
+    def get_bet(self):
+        return 0
+    
+    def get_wallet(self):
+        return 1
+    
+    def get_hand_value(self):
+        replaced_hand = [11 if card == 'A' else card for card in self.get_hand()]
+        while sum(replaced_hand) > 21 and 11 in replaced_hand:
+            replaced_hand.append(1)
+            replaced_hand.remove(11)
+        return sum(replaced_hand)
+    
+    def get_hand_half_value(self):
+        replaced_hand = [11 if card == 'A' else card for card in self.get_hand_half()]
+        while sum(replaced_hand) > 21 and 11 in replaced_hand:
+            replaced_hand.append(1)
+            replaced_hand.remove(11)
+        return sum(replaced_hand)
 
     def update_hand(self, cards):
         for card in cards:
@@ -177,13 +212,25 @@ class Dealer():
 
     def hit(self):
         self.update_hand([random.choice(GameState.deck)])
-        print("Dealer's hand is now: " + str(self.get_hand_half()))
+        print("Dealer's hand is now: " + "[?]" + str(self.get_hand_half()))
 
     def stay(self):
         print("Dealer stands on " + str(self.get_hand_value()) + ".")
+        self.stand = True
     
     def turn_logic(self):
-        pass
+        while self.get_hand_half_value() < 17:
+            self.hit()
+        if self.get_hand_half_value() <= 21:
+            self.stay()
+        else:
+            print("Dealer busts!")
+            self.bust = True
+
+#    def check_bust(self):
+#        if self.get_hand_value() > 21:
+#            print("Dealer busts!")
+#            self.bust = True
 
 
 def main():
@@ -196,13 +243,16 @@ def main():
 
     while player.out == False:
         player.take_bet()
+        gamestate.collect_bets()
         gamestate.deal()
         print("The dealer is showing [?]" + str(dealer.get_hand_half()))
+        player.get_hand_value()
         player.turn_logic()
-        player.clear_hand()
-        ##DEALER TURN LOGIC HERE
-        ##REVEAL HANDS
-        ##CHECK WINNER
+        dealer.turn_logic()
+        gamestate.reveal()
+        gamestate.calculate_winner()
         ##DISTRIBUTE POT, CLEAR HANDS
-        
+        gamestate.clear_hands()
+        gamestate.check_outs()
+        #make clear_hand a GameState method
 main()
