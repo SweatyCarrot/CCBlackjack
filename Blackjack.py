@@ -1,10 +1,12 @@
 import random
 
+#Experimental Exception
 class InvalidInput(Exception):
     pass
 
+#GameState Class
 class GameState():
-    deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, "A"]
+    deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, "A"]
     players = []
 
     def __init__(self, pot = 0):
@@ -34,27 +36,35 @@ class GameState():
         print("Cards have been dealt!")
     
     def reveal(self):
-        print("Let's reveal!")
+        print("Results!")
         for player in GameState.players:
             print(player.name + " has " + str(player.get_hand()) + " with a value of " + str(player.get_hand_value()))
     
     def calculate_winner(self):
-        winner = ""
-        score = 0
+        score_list = []
         for p in GameState.players:
-            if p.bust == False and p.get_hand_value() > score:
-                score = p.get_hand_value()
-                winner = p
-        if winner == "":
+            score_list.append(p.get_hand_value())
+        if sum(score_list)/ len(score_list) == score_list[0]:
             print("No winner! Returning bets!")
             for p in GameState.players:
                 p.wallet += p.bet
         else:
-            print(self.pot)
-            if len(GameState.players) == 2:
-                self.pot += self.pot
-            print(winner.name + " has won the round! They win " + str(self.pot))
-            winner.wallet += self.pot
+            winner = ""
+            score = 0
+            for p in GameState.players:
+                if p.bust == False and p.get_hand_value() > score:
+                    score = p.get_hand_value()
+                    winner = p
+            if winner == "":
+                print("No winner! Returning bets!")
+                for p in GameState.players:
+                    p.wallet += p.bet
+            else:
+                print(self.pot)
+                if len(GameState.players) == 2:
+                    self.pot += self.pot
+                print(winner.name + " has won the round! They win " + str(self.pot))
+                winner.wallet += self.pot
 
     def clear_hands(self):
         self.pot = 0
@@ -69,7 +79,7 @@ class GameState():
             if p.get_wallet() <= 0:
                 p.out = True
 
-
+#Player Class
 class Player():
 
     def __init__(self, wallet):
@@ -116,7 +126,6 @@ class Player():
             replaced_hand.append(1)
             replaced_hand.remove(11)
         return sum(replaced_hand)
-
 
     def take_bet(self):
         print("Your current wallet is " + str(self.get_wallet()) + ".")
@@ -169,6 +178,7 @@ class Player():
                     else:
                         print("Invalid Input")
 
+#Dealer Class
 class Dealer():
     risk = 0.25
 
@@ -178,6 +188,7 @@ class Dealer():
         self.hand = []
         self.bust = False
         self.stand = False
+        self.bet = 0
         GameState.players.append(self)
     
     def get_hand_half(self):
@@ -212,27 +223,23 @@ class Dealer():
 
     def hit(self):
         self.update_hand([random.choice(GameState.deck)])
-        print("Dealer's hand is now: " + "[?]" + str(self.get_hand_half()))
+        print("Dealer hits.\nDealer's hand is now: " + str(self.get_hand()))
 
     def stay(self):
         print("Dealer stands on " + str(self.get_hand_value()) + ".")
         self.stand = True
     
     def turn_logic(self):
-        while self.get_hand_half_value() < 17:
+        print("Dealer's hand is: " + str(self.get_hand()))
+        while self.get_hand_value() < 17:
             self.hit()
-        if self.get_hand_half_value() <= 21:
+        if self.get_hand_value() <= 21:
             self.stay()
         else:
             print("Dealer busts!")
             self.bust = True
 
-#    def check_bust(self):
-#        if self.get_hand_value() > 21:
-#            print("Dealer busts!")
-#            self.bust = True
-
-
+#Main
 def main():
     gamestate = GameState()
 
@@ -251,8 +258,6 @@ def main():
         dealer.turn_logic()
         gamestate.reveal()
         gamestate.calculate_winner()
-        ##DISTRIBUTE POT, CLEAR HANDS
         gamestate.clear_hands()
         gamestate.check_outs()
-        #make clear_hand a GameState method
 main()
