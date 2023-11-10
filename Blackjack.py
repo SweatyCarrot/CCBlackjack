@@ -1,3 +1,5 @@
+#Testing committing and pushing a branch
+#Testing more things out
 import random
 
 #Experimental Exception
@@ -7,6 +9,9 @@ class InvalidInput(Exception):
 #GameState Class
 class GameState():
     deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, "A"]
+    #All players including the dealer
+    players_all = []
+    #All players NOT including the dealer
     players = []
 
     def __init__(self, pot = 0):
@@ -29,20 +34,21 @@ class GameState():
         for p in GameState.players:
             self.pot += p.get_bet()
                 
-    def deal(self):
-        for object in GameState.players:
+    def deal(self, dealer):
+        for object in GameState.players_all:
             for i in range(2):
                 object.update_hand([random.choice(GameState.deck)])
         print("Cards have been dealt!")
+        print("The dealer is showing [?]" + str(dealer.get_hand_half()))
     
     def reveal(self):
         print("Results!")
-        for player in GameState.players:
+        for player in GameState.players_all:
             print(player.name + " has " + str(player.get_hand()) + " with a value of " + str(player.get_hand_value()))
     
     def calculate_winner(self):
         score_list = []
-        for p in GameState.players:
+        for p in GameState.players_all:
             score_list.append(p.get_hand_value())
         if sum(score_list)/ len(score_list) == score_list[0]:
             print("No winner! Returning bets!")
@@ -51,7 +57,7 @@ class GameState():
         else:
             winner = ""
             score = 0
-            for p in GameState.players:
+            for p in GameState.players_all:
                 if p.bust == False and p.get_hand_value() > score:
                     score = p.get_hand_value()
                     winner = p
@@ -61,14 +67,17 @@ class GameState():
                     p.wallet += p.bet
             else:
                 print(self.pot)
-                if len(GameState.players) == 2:
+                if len(GameState.players) == 1:
                     self.pot += self.pot
                 print(winner.name + " has won the round! They win " + str(self.pot))
-                winner.wallet += self.pot
+                try:
+                    winner.wallet += self.pot
+                except AttributeError:
+                    pass
 
     def clear_hands(self):
         self.pot = 0
-        for p in GameState.players:
+        for p in GameState.players_all:
             p.bet = 0
             p.hand = []
             p.stand = False
@@ -79,16 +88,36 @@ class GameState():
             if p.get_wallet() <= 0:
                 p.out = True
 
-#Player Class
-class Player():
-
-    def __init__(self, wallet):
-        self.name = "Player1"
-        self.wallet = wallet
+#Person Class
+class Person():
+    def __init__(self, name):
+        self.name = name
         self.hand = []
-        self.bet = 0
-        self.stand = False
         self.bust = False
+        self.stand = False
+        GameState.players_all.append(self)
+
+    def get_hand(self):
+        return self.hand
+    
+    def update_hand(self, cards):
+        for card in cards:
+            self.hand.append(card)
+    
+    def get_hand_value(self):
+        replaced_hand = [11 if card == 'A' else card for card in self.get_hand()]
+        while sum(replaced_hand) > 21 and 11 in replaced_hand:
+            replaced_hand.append(1)
+            replaced_hand.remove(11)
+        return sum(replaced_hand)
+    
+#Player Class - Inherits from Person
+class Player(Person):
+
+    def __init__(self, name, wallet):
+        Person.__init__(self, name)
+        self.wallet = wallet
+        self.bet = 0
         self.out = False
         GameState.players.append(self)
 
@@ -101,31 +130,11 @@ class Player():
         else:
             self.wallet -= value
 
-    def update_hand(self, cards):
-        for card in cards:
-            self.hand.append(card)
-    
-    def clear_hand(self):
-        self.hand = []
-        self.stand = False
-        self.bust = False
-
     def get_bet(self):
         return self.bet
 
     def update_bet(self, value):
         self.bet += value
-    
-    def get_hand(self):
-        return self.hand
-
-    
-    def get_hand_value(self):
-        replaced_hand = [11 if card == 'A' else card for card in self.get_hand()]
-        while sum(replaced_hand) > 21 and 11 in replaced_hand:
-            replaced_hand.append(1)
-            replaced_hand.remove(11)
-        return sum(replaced_hand)
 
     def take_bet(self):
         print("Your current wallet is " + str(self.get_wallet()) + ".")
@@ -178,48 +187,15 @@ class Player():
                     else:
                         print("Invalid Input")
 
-#Dealer Class
-class Dealer():
-    risk = 0.25
+#Dealer Class - Inherits from Person
+class Dealer(Person):
 
     def __init__(self):
-        self.name = "Dealer"
-        self.wallet = 0
+        Person.__init__(self, "Dealer")
         self.hand = []
-        self.bust = False
-        self.stand = False
-        self.bet = 0
-        GameState.players.append(self)
     
     def get_hand_half(self):
         return self.hand[1:]
-
-    def get_hand(self):
-        return self.hand
-
-    def get_bet(self):
-        return 0
-    
-    def get_wallet(self):
-        return 1
-    
-    def get_hand_value(self):
-        replaced_hand = [11 if card == 'A' else card for card in self.get_hand()]
-        while sum(replaced_hand) > 21 and 11 in replaced_hand:
-            replaced_hand.append(1)
-            replaced_hand.remove(11)
-        return sum(replaced_hand)
-    
-    def get_hand_half_value(self):
-        replaced_hand = [11 if card == 'A' else card for card in self.get_hand_half()]
-        while sum(replaced_hand) > 21 and 11 in replaced_hand:
-            replaced_hand.append(1)
-            replaced_hand.remove(11)
-        return sum(replaced_hand)
-
-    def update_hand(self, cards):
-        for card in cards:
-            self.hand.append(card)
 
     def hit(self):
         self.update_hand([random.choice(GameState.deck)])
@@ -245,14 +221,13 @@ def main():
 
     player_wallet = gamestate.initial_wallet()
 
-    player = Player(player_wallet)
+    player = Player("Player1", player_wallet)
     dealer = Dealer()
 
     while player.out == False:
         player.take_bet()
         gamestate.collect_bets()
-        gamestate.deal()
-        print("The dealer is showing [?]" + str(dealer.get_hand_half()))
+        gamestate.deal(dealer)
         player.get_hand_value()
         player.turn_logic()
         dealer.turn_logic()
