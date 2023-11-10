@@ -1,10 +1,14 @@
-#Testing committing and pushing a branch
-#Testing more things out
+#Actions Enum Branch
 import random
+from enum import Enum
 
 #Experimental Exception
 class InvalidInput(Exception):
     pass
+
+class Player_Actions(Enum):
+    HIT = 1
+    STAND = 2
 
 #GameState Class
 class GameState():
@@ -174,18 +178,18 @@ class Player(Person):
                     print("Blackjack!")
                     self.stay()
                 else:
-                    action = input("Hit or Stand: ").lower()
-                    if action == "hit":
+                    action = input("Hit or Stand: ").upper()
+                    if action == Player_Actions(1).name:
                         self.hit()
                         if self.get_hand_value() <= 21:
                             continue
                         else:
                             print("You bust!")
                             self.bust = True
-                    elif action == "stand":
+                    elif action == Player_Actions(2).name:
                         self.stay()
                     else:
-                        print("Invalid Input")
+                        print("Invalid Input. Please choose Hit or Stand")
 
 #Dealer Class - Inherits from Person
 class Dealer(Person):
