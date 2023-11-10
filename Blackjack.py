@@ -52,7 +52,7 @@ class GameState():
             score_list.append(p.get_hand_value())
         if sum(score_list)/ len(score_list) == score_list[0]:
             print("No winner! Returning bets!")
-            for p in GameState.players_all:
+            for p in GameState.players:
                 p.wallet += p.bet
         else:
             winner = ""
@@ -63,14 +63,17 @@ class GameState():
                     winner = p
             if winner == "":
                 print("No winner! Returning bets!")
-                for p in GameState.players_all:
+                for p in GameState.players:
                     p.wallet += p.bet
             else:
                 print(self.pot)
-                if len(GameState.players_all) == 2:
+                if len(GameState.players) == 1:
                     self.pot += self.pot
                 print(winner.name + " has won the round! They win " + str(self.pot))
-                winner.wallet += self.pot
+                try:
+                    winner.wallet += self.pot
+                except AttributeError:
+                    pass
 
     def clear_hands(self):
         self.pot = 0
@@ -81,7 +84,7 @@ class GameState():
             p.bust = False
     
     def check_outs(self):
-        for p in GameState.players_all:
+        for p in GameState.players:
             if p.get_wallet() <= 0:
                 p.out = True
 
@@ -107,7 +110,6 @@ class Person():
             replaced_hand.append(1)
             replaced_hand.remove(11)
         return sum(replaced_hand)
-
     
 #Player Class - Inherits from Person
 class Player(Person):
@@ -225,7 +227,7 @@ def main():
     while player.out == False:
         player.take_bet()
         gamestate.collect_bets()
-        gamestate.deal()
+        gamestate.deal(dealer)
         player.get_hand_value()
         player.turn_logic()
         dealer.turn_logic()
