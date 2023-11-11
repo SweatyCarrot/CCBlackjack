@@ -50,9 +50,12 @@ class GameState():
             print(player.name + " has " + str(player.get_hand()) + " with a value of " + str(player.get_hand_value()))
     
     def return_bets(self, winners):
-        for p in winners:
             try:
-                p.wallet += p.bet
+                if len(winners) == 1 and len(GameState.players) == 1:
+                    winners[0].wallet += (winners[0].get_bet() * 2)
+                else:
+                    for p in winners:
+                        p.wallet += round(self.pot / len(winners))
             except AttributeError:
                 pass
 
@@ -66,21 +69,34 @@ class GameState():
         for p in GameState.players_all:
             if p.bust == False:
                 non_busted_players_all.append(p)
+        print("Non busted: " + str(non_busted_players_all))
         #Check if all busted. Void round if all busted
         if len(non_busted_players_all) == 0:
             print("All busted! Round voided and bets returned!")
             self.return_bets(GameState.players)
-        #Check
+        #Check if only one player won
+        elif len(non_busted_players_all) == 1:
+            print(non_busted_players_all[0].name + " won the round! They win the pot!")
+            self.return_bets(non_busted_players_all)
+        #Check for tie among non busted players            
         elif self.check_tie(non_busted_players_all) == True:
             print("Players tied! Pot split among tied players! (Bankers rounding may take a cut for the house, sorry!)")
-            #build list of non-busted players NOT including dealer
-            non_busted_players = []
-            for p in GameState.players:
-                if p.bust == False:
-                    non_busted_players.append(p)
-            for p in non_busted_players:
-                p.wallet += round(self.pot / len(non_busted_players))
-        #Need another elif to check for a sole winner
+            self.return_bets(non_busted_players_all)
+        #Handle one or more players winning
+        else:
+            winners = []
+            score = 0
+            for p in non_busted_players_all:
+                if p.get_hand_value() > score:
+                    winners = []
+                    winners.append(p)
+                    score = p.get_hand_value()
+                elif p.get_hand_value() == score:
+                    winners.append(p)
+            winner_names = [p.name for p in winners]
+            print("The following players won the round: " + str(winner_names) + ". The pot will be split equally among them.")
+            self.return_bets(winners)
+            
 
     def clear_hands(self):
         self.pot = 0
