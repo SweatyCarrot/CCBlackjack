@@ -1,4 +1,3 @@
-#Actions Enum Branch
 import random
 from enum import Enum
 
@@ -50,34 +49,54 @@ class GameState():
         for player in GameState.players_all:
             print(player.name + " has " + str(player.get_hand()) + " with a value of " + str(player.get_hand_value()))
     
+    def return_bets(self, winners):
+            try:
+                if len(winners) == 1 and len(GameState.players) == 1:
+                    winners[0].wallet += (winners[0].get_bet() * 2)
+                else:
+                    for p in winners:
+                        p.wallet += round(self.pot / len(winners))
+            except AttributeError:
+                pass
+
+    def check_tie(self, players):
+        return all(i == players[0] for i in players)
+        #https://www.geeksforgeeks.org/python-check-if-all-elements-in-a-list-are-identical/
+    
     def calculate_winner(self):
-        score_list = []
+        #Build list of non-busted players including dealer
+        non_busted_players_all = []
         for p in GameState.players_all:
-            score_list.append(p.get_hand_value())
-        if sum(score_list)/ len(score_list) == score_list[0]:
-            print("No winner! Returning bets!")
-            for p in GameState.players:
-                p.wallet += p.bet
+            if p.bust == False:
+                non_busted_players_all.append(p)
+        print("Non busted: " + str(non_busted_players_all))
+        #Check if all busted. Void round if all busted
+        if len(non_busted_players_all) == 0:
+            print("All busted! Round voided and bets returned!")
+            self.return_bets(GameState.players)
+        #Check if only one player won
+        elif len(non_busted_players_all) == 1:
+            print(non_busted_players_all[0].name + " won the round! They win the pot!")
+            self.return_bets(non_busted_players_all)
+        #Check for tie among non busted players            
+        elif self.check_tie(non_busted_players_all) == True:
+            print("Players tied! Pot split among tied players! (Bankers rounding may take a cut for the house, sorry!)")
+            self.return_bets(non_busted_players_all)
+        #Handle one or more players winning
         else:
-            winner = ""
+            winners = []
             score = 0
-            for p in GameState.players_all:
-                if p.bust == False and p.get_hand_value() > score:
+            for p in non_busted_players_all:
+                if p.get_hand_value() > score:
+                    winners = []
+                    winners.append(p)
                     score = p.get_hand_value()
-                    winner = p
-            if winner == "":
-                print("No winner! Returning bets!")
-                for p in GameState.players:
-                    p.wallet += p.bet
-            else:
-                print(self.pot)
-                if len(GameState.players) == 1:
-                    self.pot += self.pot
-                print(winner.name + " has won the round! They win " + str(self.pot))
-                try:
-                    winner.wallet += self.pot
-                except AttributeError:
-                    pass
+                elif p.get_hand_value() == score:
+                    winners.append(p)
+            winner_names = [p.name for p in winners]
+            print("The following players won the round: " + str(winner_names) + ". The pot will be split equally among them.")
+            self.return_bets(winners)
+            
 
     def clear_hands(self):
         self.pot = 0
