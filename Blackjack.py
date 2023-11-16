@@ -58,10 +58,6 @@ class GameState():
                         p.wallet += round(self.pot / len(winners))
             except AttributeError:
                 pass
-
-    def check_tie(self, players):
-        return all(i == players[0] for i in players)
-        #https://www.geeksforgeeks.org/python-check-if-all-elements-in-a-list-are-identical/
     
     def calculate_winner(self):
         #Build list of non-busted players including dealer
@@ -77,10 +73,6 @@ class GameState():
         #Check if only one player won
         elif len(non_busted_players_all) == 1:
             print(non_busted_players_all[0].name + " won the round! They win the pot!")
-            self.return_bets(non_busted_players_all)
-        #Check for tie among non busted players            
-        elif self.check_tie(non_busted_players_all) == True:
-            print("Players tied! Pot split among tied players! (Bankers rounding may take a cut for the house, sorry!)")
             self.return_bets(non_busted_players_all)
         #Handle one or more players winning
         else:
