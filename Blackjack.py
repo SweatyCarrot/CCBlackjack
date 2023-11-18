@@ -1,4 +1,5 @@
 import random
+from time import sleep
 from enum import Enum
 
 #Experimental Exception
@@ -42,12 +43,14 @@ class GameState():
             for i in range(2):
                 object.update_hand([random.choice(GameState.deck)])
         print("Cards have been dealt!")
+        sleep(0.5)
         print("The dealer is showing [?]" + str(dealer.get_hand_half()))
     
     def reveal(self):
         print("Results!")
         for player in GameState.players_all:
             print(player.name + " has " + str(player.get_hand()) + " with a value of " + str(player.get_hand_value()))
+            sleep(0.5)
     
     def return_bets(self, winners):
             try:
@@ -65,7 +68,7 @@ class GameState():
         for p in GameState.players_all:
             if p.bust == False:
                 non_busted_players_all.append(p)
-        print("Non busted: " + str(non_busted_players_all))
+        #print("Non busted: " + str(non_busted_players_all))
         #Check if all busted. Void round if all busted
         if len(non_busted_players_all) == 0:
             print("All busted! Round voided and bets returned!")
@@ -171,22 +174,29 @@ class Player(Person):
                 continue
 
     def hit(self):
+        sleep(0.5)
         self.update_hand([random.choice(GameState.deck)])
         print("Your hand is now: " + str(self.get_hand()) + ". Hand value: " + str(self.get_hand_value()))
+        sleep(0.5)
 
     def stay(self):
+        sleep(0.5)
         print("You stand on " + str(self.get_hand_value()) + ".")
         self.stand = True
+        sleep(0.5)
     
     def turn_logic(self):
         if self.get_hand_value == 21:
                 print("Your hand is " + str(self.get_hand()))
                 print("Blackjack!")
+                sleep(0.5)
         else:
+            sleep(0.5)
             print("Your current hand is " + str(self.get_hand()) + ". Hand value: " + str(self.get_hand_value()) + "\nWould you like to Hit or Stand?")
             while self.get_hand_value() <= 21 and self.bust == False and self.stand == False:
                 if self.get_hand_value() == 21:
                     print("Blackjack!")
+                    sleep(0.5)
                     self.stay()
                 else:
                     action = input("Hit or Stand: ").upper()
@@ -213,12 +223,16 @@ class Dealer(Person):
         return self.hand[1:]
 
     def hit(self):
+        sleep(1)
         self.update_hand([random.choice(GameState.deck)])
         print("Dealer hits.\nDealer's hand is now: " + str(self.get_hand()))
+        sleep(1)
 
     def stay(self):
+        sleep(0.5)
         print("Dealer stands on " + str(self.get_hand_value()) + ".")
         self.stand = True
+        sleep(1)
     
     def turn_logic(self):
         print("Dealer's hand is: " + str(self.get_hand()))
@@ -243,6 +257,7 @@ def main():
         player.take_bet()
         gamestate.collect_bets()
         gamestate.deal(dealer)
+        sleep(0.5)
         player.get_hand_value()
         player.turn_logic()
         dealer.turn_logic()
