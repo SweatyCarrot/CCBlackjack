@@ -44,12 +44,12 @@ class GameState():
                 object.update_hand([random.choice(GameState.deck)])
         print("Cards have been dealt!")
         sleep(0.5)
-        print("The dealer is showing [?]" + str(dealer.get_hand_half()))
+        print(f"The dealer is showing [?]{dealer.get_hand_half()}")
     
     def reveal(self):
         print("Results!")
         for player in GameState.players_all:
-            print(player.name + " has " + str(player.get_hand()) + " with a value of " + str(player.get_hand_value()))
+            print(f"{player.name} has {player.get_hand()} with a value of {player.get_hand_value()}")
             sleep(0.5)
     
     def return_bets(self, winners):
@@ -75,7 +75,7 @@ class GameState():
             self.return_bets(GameState.players)
         #Check if only one player won
         elif len(non_busted_players_all) == 1:
-            print(non_busted_players_all[0].name + " won the round! They win the pot!")
+            print(f"{non_busted_players_all[0].name} won the round! They win the pot!")
             self.return_bets(non_busted_players_all)
         #Handle one or more players winning
         else:
@@ -89,7 +89,7 @@ class GameState():
                 elif p.get_hand_value() == score:
                     winners.append(p)
             winner_names = [p.name for p in winners]
-            print("The following players won the round: " + str(winner_names) + ". The pot will be split equally among them.")
+            print(f"The following players won the round: {winner_names}. The pot will be split equally among them.")
             self.return_bets(winners)
             
 
@@ -155,7 +155,7 @@ class Player(Person):
         self.bet += value
 
     def take_bet(self):
-        print("Your current wallet is " + str(self.get_wallet()) + ".")
+        print(f"Your current wallet is {self.get_wallet()}.")
         while True:
             try:
                 bet_amount = input("Please enter your bet: ")
@@ -176,23 +176,24 @@ class Player(Person):
     def hit(self):
         sleep(0.5)
         self.update_hand([random.choice(GameState.deck)])
-        print("Your hand is now: " + str(self.get_hand()) + ". Hand value: " + str(self.get_hand_value()))
+        print(f"Your hand is now: {self.get_hand()}. Hand value: {self.get_hand_value()}")
         sleep(0.5)
 
     def stay(self):
         sleep(0.5)
-        print("You stand on " + str(self.get_hand_value()) + ".")
+        print(f"You stand on {self.get_hand_value()}.")
         self.stand = True
         sleep(0.5)
     
     def turn_logic(self):
         if self.get_hand_value == 21:
-                print("Your hand is " + str(self.get_hand()))
+                print(f"Your hand is {self.get_hand()}.")
                 print("Blackjack!")
                 sleep(0.5)
         else:
+            newline = '\n'
             sleep(0.5)
-            print("Your current hand is " + str(self.get_hand()) + ". Hand value: " + str(self.get_hand_value()) + "\nWould you like to Hit or Stand?")
+            print(f"Your current hand is {self.get_hand()}. Hand value: {self.get_hand_value()} {newline}Would you like to Hit or Stand?")
             while self.get_hand_value() <= 21 and self.bust == False and self.stand == False:
                 if self.get_hand_value() == 21:
                     print("Blackjack!")
@@ -223,19 +224,20 @@ class Dealer(Person):
         return self.hand[1:]
 
     def hit(self):
+        newline = '\n'
         sleep(1)
         self.update_hand([random.choice(GameState.deck)])
-        print("Dealer hits.\nDealer's hand is now: " + str(self.get_hand()))
+        print(f"Dealer hits.{newline}Dealer's hand is now: {self.get_hand()}")
         sleep(1)
 
     def stay(self):
         sleep(0.5)
-        print("Dealer stands on " + str(self.get_hand_value()) + ".")
+        print(f"Dealer stands on {self.get_hand_value()}.")
         self.stand = True
         sleep(1)
     
     def turn_logic(self):
-        print("Dealer's hand is: " + str(self.get_hand()))
+        print(f"Dealer's hand is: {self.get_hand()}")
         while self.get_hand_value() < 17:
             self.hit()
         if self.get_hand_value() <= 21:
