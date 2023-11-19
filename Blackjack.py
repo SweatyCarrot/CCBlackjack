@@ -26,12 +26,12 @@ class GameState():
         while True:
             user_input = input("What would you like your wallet to be? (Must be lower than $1000): $")
             if not is_digit(user_input):
-                print("Input must be a number!")
+                print("Input must be a number!", file=sys.stderr)
                 continue
 
             wallet = int(user_input)
             if wallet <= 0 or wallet >= 1000:
-                print("Amount must be between 1 and 999!")
+                print("Amount must be between 1 and 999!", file=sys.stderr)
                 continue
 
             return wallet
@@ -142,12 +142,12 @@ class Player(Person):
         while True:
             bet_input = input("Please enter your bet: ")
             if not is_digit(bet_input):
-                print("Must enter a number!")
+                print("Must enter a number!", file=sys.stderr)
                 continue
 
             bet_amount = int(bet_input)
             if bet_amount > self.get_wallet() or bet_amount <= 0:
-                print("Amount must be more than 0 and less than your wallet balance!")
+                print("Amount must be more than 0 and less than your wallet balance!", file=sys.stderr)
                 continue
 
             self.update_bet(bet_amount)
