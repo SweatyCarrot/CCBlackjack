@@ -2,109 +2,99 @@ import random
 from time import sleep
 from enum import Enum
 
-#Experimental Exception
-class InvalidInput(Exception):
-    pass
+DECK = [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, "A"]
 
 class Player_Actions(Enum):
-    HIT = 1
-    STAND = 2
+    HIT
+    STAND
 
 #GameState Class
 class GameState():
-    deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, "A"]
-    #All players including the dealer
-    players_all = []
-    #All players NOT including the dealer
-    players = []
+    def __init__(self):
+        self.pot = 0
+        self.players_all = [Dealer()] # All players including the dealer
+        self.players = [] # All players NOT including the dealer
 
-    def __init__(self, pot = 0):
-        self.pot = pot
-    
-    def initial_wallet(self):
+    def add_player(self, name):
+        player_wallet = gamestate.get_initial_wallet()
+        player = Player(name, player_wallet)
+
+        self.players_all.append(player)
+        self.players.append(player)
+
+    def get_initial_wallet(self):
         while True:
-            try:
-                wallet = int(input("What would you like your wallet to be? (Must be lower than $1000): $"))
-                if wallet > 0 and wallet < 1000:
-                    return wallet
-                else:
-                    raise InvalidInput
-            except InvalidInput:
-                print("Invalid Input")
-            except:
-                print("Invalid Input")
+            user_input = input("What would you like your wallet to be? (Must be lower than $1000): $")
+            if not is_digit(user_input):
+                print("Input must be a number!")
+                continue
+
+            wallet = int(user_input)
+            if wallet <= 0 or wallet >= 1000:
+                print("Amount must be between 1 and 999!")
+                continue
+
+            return wallet
 
     def collect_bets(self):
-        for p in GameState.players:
-            self.pot += p.get_bet()
+        for player in self.players:
+            self.pot += player.get_bet()
                 
     def deal(self, dealer):
-        for object in GameState.players_all:
+        for player in self.players_all:
             for i in range(2):
-                object.update_hand([random.choice(GameState.deck)])
+                player.add_card_to_hand(random.choice(DECK))
         print("Cards have been dealt!")
         sleep(0.5)
         print(f"The dealer is showing [?]{dealer.get_hand_half()}")
     
     def reveal(self):
         print("Results!")
-        for player in GameState.players_all:
+        for player in self.players_all:
             print(f"{player.name} has {player.get_hand()} with a value of {player.get_hand_value()}")
             sleep(0.5)
     
     def return_bets(self, winners):
-            try:
-                if len(winners) == 1 and len(GameState.players) == 1:
-                    winners[0].wallet += (winners[0].get_bet() * 2)
-                else:
-                    for p in winners:
-                        p.wallet += round(self.pot / len(winners))
-            except AttributeError:
-                pass
+            if len(winners) == 1 and len(self.players) == 1:
+                winner = winners[0]
+                winner.wallet += winner.get_bet() * 2
+            else:
+                for player in winners:
+                    player.wallet += round(self.pot / len(winners))
     
     def calculate_winner(self):
         #Build list of non-busted players including dealer
-        non_busted_players_all = []
-        for p in GameState.players_all:
-            if p.bust == False:
-                non_busted_players_all.append(p)
-        #print("Non busted: " + str(non_busted_players_all))
-        #Check if all busted. Void round if all busted
+        non_busted_players_all = filter(lambda player: not player.bust, self.players_all)
+
         if len(non_busted_players_all) == 0:
+            #Check if all busted. Void round if all busted
             print("All busted! Round voided and bets returned!")
-            self.return_bets(GameState.players)
-        #Check if only one player won
+            self.return_bets(self.players)
         elif len(non_busted_players_all) == 1:
+            #Check if only one player won
             print(f"{non_busted_players_all[0].name} won the round! They win the pot!")
             self.return_bets(non_busted_players_all)
-        #Handle one or more players winning
         else:
-            winners = []
-            score = 0
-            for p in non_busted_players_all:
-                if p.get_hand_value() > score:
-                    winners = []
-                    winners.append(p)
-                    score = p.get_hand_value()
-                elif p.get_hand_value() == score:
-                    winners.append(p)
-            winner_names = [p.name for p in winners]
+            #Handle one or more players winning
+            highest_score = max(map(lambda player: player.get_hand_value(), non_busted_player_all))
+            winners = filter(lambda player: player.get_hand_value() == highest_score, non_busted_players_all)
+            winner_names = [player.name for player in winners]
             print(f"The following players won the round: {winner_names}. The pot will be split equally among them.")
             self.return_bets(winners)
             
 
     def clear_hands(self):
         self.pot = 0
-        for p in GameState.players_all:
-            p.bet = 0
-            p.hand = []
-            p.stand = False
-            p.bust = False
+        for player in self.players_all:
+            player.bet = 0
+            player.hand = []
+            player.stand = False
+            player.bust = False
     
     def check_outs(self):
-        for p in GameState.players:
-            if p.get_wallet() <= 0:
-                p.out = True
+        for player in self.players:
+            if player.get_wallet() <= 0:
+                player.is_out = True
 
 #Person Class
 class Person():
@@ -113,14 +103,12 @@ class Person():
         self.hand = []
         self.bust = False
         self.stand = False
-        GameState.players_all.append(self)
 
     def get_hand(self):
         return self.hand
     
-    def update_hand(self, cards):
-        for card in cards:
-            self.hand.append(card)
+    def add_card_to_hand(self, card):
+        self.hand.append(card)
     
     def get_hand_value(self):
         replaced_hand = [11 if card == 'A' else card for card in self.get_hand()]
@@ -131,22 +119,17 @@ class Person():
     
 #Player Class - Inherits from Person
 class Player(Person):
-
     def __init__(self, name, wallet):
-        Person.__init__(self, name)
+        super().__init__(self, name)
         self.wallet = wallet
         self.bet = 0
-        self.out = False
-        GameState.players.append(self)
+        self.is_out = False
 
     def get_wallet(self):
         return self.wallet
 
-    def update_wallet(self, value, increase = True):
-        if increase == True:
-            self.wallet += value
-        else:
-            self.wallet -= value
+    def update_wallet(self, value):
+        self.wallet += value
 
     def get_bet(self):
         return self.bet
@@ -157,25 +140,23 @@ class Player(Person):
     def take_bet(self):
         print(f"Your current wallet is {self.get_wallet()}.")
         while True:
-            try:
-                bet_amount = input("Please enter your bet: ")
-                bet_amount = int(bet_amount)
-                if bet_amount <= self.get_wallet() and bet_amount > 0:
-                    self.update_bet(bet_amount)
-                    self.update_wallet(bet_amount, False)
-                    break
-                else:
-                    raise InvalidInput
-            except KeyboardInterrupt:
-                print("Keyboard Interrupt")
-                exit()
-            except:
-                print("Invalid input.")
+            bet_input = input("Please enter your bet: ")
+            if not is_digit(bet_input):
+                print("Must enter a number!")
                 continue
+
+            bet_amount = int(bet_input)
+            if bet_amount > self.get_wallet() or bet_amount <= 0:
+                print("Amount must be more than 0 and less than your wallet balance!")
+                continue
+
+            self.update_bet(bet_amount)
+            self.update_wallet(-bet_amount)
+            return
 
     def hit(self):
         sleep(0.5)
-        self.update_hand([random.choice(GameState.deck)])
+        self.add_card_to_hand(random.choice(DECK))
         print(f"Your hand is now: {self.get_hand()}. Hand value: {self.get_hand_value()}")
         sleep(0.5)
 
@@ -191,43 +172,40 @@ class Player(Person):
                 print("Blackjack!")
                 sleep(0.5)
         else:
-            newline = '\n'
             sleep(0.5)
-            print(f"Your current hand is {self.get_hand()}. Hand value: {self.get_hand_value()} {newline}Would you like to Hit or Stand?")
-            while self.get_hand_value() <= 21 and self.bust == False and self.stand == False:
+            print(f"Your current hand is {self.get_hand()}. Hand value: {self.get_hand_value()}\nWould you like to Hit or Stand?")
+            while self.get_hand_value() <= 21 and not self.bust and not self.stand:
                 if self.get_hand_value() == 21:
                     print("Blackjack!")
                     sleep(0.5)
                     self.stay()
                 else:
                     action = input("Hit or Stand: ").upper()
-                    if action == Player_Actions(1).name:
+                    if action == Player_Actions(0).name:
                         self.hit()
                         if self.get_hand_value() <= 21:
                             continue
                         else:
                             print("You bust!")
                             self.bust = True
-                    elif action == Player_Actions(2).name:
+                    elif action == Player_Actions(1).name:
                         self.stay()
                     else:
                         print("Invalid Input. Please choose Hit or Stand")
 
 #Dealer Class - Inherits from Person
 class Dealer(Person):
-
     def __init__(self):
-        Person.__init__(self, "Dealer")
+        super().__init__(self, "Dealer")
         self.hand = []
     
     def get_hand_half(self):
         return self.hand[1:]
 
     def hit(self):
-        newline = '\n'
         sleep(1)
-        self.update_hand([random.choice(GameState.deck)])
-        print(f"Dealer hits.{newline}Dealer's hand is now: {self.get_hand()}")
+        self.add_card_to_hand(random.choice(DECK))
+        print(f"Dealer hits.\nDealer's hand is now: {self.get_hand()}")
         sleep(1)
 
     def stay(self):
@@ -249,13 +227,9 @@ class Dealer(Person):
 #Main
 def main():
     gamestate = GameState()
+    gamestate.add_player("Player1")
 
-    player_wallet = gamestate.initial_wallet()
-
-    player = Player("Player1", player_wallet)
-    dealer = Dealer()
-
-    while player.out == False:
+    while not player.is_out:
         player.take_bet()
         gamestate.collect_bets()
         gamestate.deal(dealer)
