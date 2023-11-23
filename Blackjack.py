@@ -2,13 +2,10 @@ import random
 from time import sleep
 from enum import Enum
 
-#Experimental Exception
-class InvalidInput(Exception):
-    pass
 
 class Player_Actions(Enum):
-    HIT = 1
-    STAND = 2
+    HIT = 0
+    STAND = 1
 
 #GameState Class
 class GameState():
@@ -18,21 +15,30 @@ class GameState():
     #All players NOT including the dealer
     players = []
 
-    def __init__(self, pot = 0):
-        self.pot = pot
+    def __init__(self):
+        self.pot = 0
+
+    def add_player(self):
+        while True:
+            player_name = input("Please enter your player name: ")
+            if player_name.isalpha():
+                break
+            else:
+                print("Player name must be alphabetic characters only!")
+        player_wallet = self.initial_wallet()
+        player = Player(player_name, player_wallet)
     
     def initial_wallet(self):
         while True:
-            try:
-                wallet = int(input("What would you like your wallet to be? (Must be lower than $1000): $"))
-                if wallet > 0 and wallet < 1000:
+            wallet = input("What would you like your wallet to be? (Cannot be larger than $1000): $")
+            if wallet.isnumeric():
+                wallet = int(wallet)
+                if wallet > 0 and wallet <= 1000:
                     return wallet
                 else:
-                    raise InvalidInput
-            except InvalidInput:
-                print("Invalid Input")
-            except:
-                print("Invalid Input")
+                    print("Wallet must be greater than $0 and no larger than $1000")
+            else:
+                print("Please enter a whole number")
 
     def collect_bets(self):
         for p in GameState.players:
@@ -54,6 +60,7 @@ class GameState():
     
     def return_bets(self, winners):
             try:
+                #Handle solo players getting a fair amount
                 if len(winners) == 1 and len(GameState.players) == 1:
                     winners[0].wallet += (winners[0].get_bet() * 2)
                 else:
@@ -72,7 +79,7 @@ class GameState():
         #Check if all busted. Void round if all busted
         if len(non_busted_players_all) == 0:
             print("All busted! Round voided and bets returned!")
-            self.return_bets(GameState.players)
+            self.return_bets(GameState.players_all)
         #Check if only one player won
         elif len(non_busted_players_all) == 1:
             print(f"{non_busted_players_all[0].name} won the round! They win the pot!")
@@ -105,6 +112,13 @@ class GameState():
         for p in GameState.players:
             if p.get_wallet() <= 0:
                 p.out = True
+
+    def game_over(self):
+        if all([player.out for player in GameState.players]):
+            return True
+        else:
+            return False
+
 
 #Person Class
 class Person():
@@ -157,21 +171,17 @@ class Player(Person):
     def take_bet(self):
         print(f"Your current wallet is {self.get_wallet()}.")
         while True:
-            try:
-                bet_amount = input("Please enter your bet: ")
-                bet_amount = int(bet_amount)
-                if bet_amount <= self.get_wallet() and bet_amount > 0:
-                    self.update_bet(bet_amount)
-                    self.update_wallet(bet_amount, False)
-                    break
+                bet_amount = input("Please enter your bet: $")
+                if bet_amount.isnumeric():
+                    bet_amount = int(bet_amount)
+                    if bet_amount <= self.get_wallet() and bet_amount > 0:
+                        self.update_bet(bet_amount)
+                        self.update_wallet(bet_amount, False)
+                        break
+                    else:
+                        print("Bet amount must be greater than 0 and no greater than your total wallet.")
                 else:
-                    raise InvalidInput
-            except KeyboardInterrupt:
-                print("Keyboard Interrupt")
-                exit()
-            except:
-                print("Invalid input.")
-                continue
+                    print("Please enter a whole number.")
 
     def hit(self):
         sleep(0.5)
@@ -201,14 +211,14 @@ class Player(Person):
                     self.stay()
                 else:
                     action = input("Hit or Stand: ").upper()
-                    if action == Player_Actions(1).name:
+                    if action == Player_Actions(0).name:
                         self.hit()
                         if self.get_hand_value() <= 21:
                             continue
                         else:
                             print("You bust!")
                             self.bust = True
-                    elif action == Player_Actions(2).name:
+                    elif action == Player_Actions(1).name:
                         self.stay()
                     else:
                         print("Invalid Input. Please choose Hit or Stand")
@@ -249,19 +259,18 @@ class Dealer(Person):
 #Main
 def main():
     gamestate = GameState()
-
-    player_wallet = gamestate.initial_wallet()
-
-    player = Player("Player1", player_wallet)
+    gamestate.add_player()
     dealer = Dealer()
 
-    while player.out == False:
-        player.take_bet()
+    while not gamestate.game_over():
+        for player in GameState.players:
+            player.take_bet()
         gamestate.collect_bets()
         gamestate.deal(dealer)
         sleep(0.5)
-        player.get_hand_value()
-        player.turn_logic()
+        for player in GameState.players:
+            player.get_hand_value()
+            player.turn_logic()
         dealer.turn_logic()
         gamestate.reveal()
         gamestate.calculate_winner()
