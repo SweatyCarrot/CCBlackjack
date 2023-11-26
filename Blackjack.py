@@ -270,7 +270,6 @@ def main():
     gamestate.add_player()
     dealer = Dealer()
     gamestate.check_solo_game()
-    print(gamestate.solo_game)
 
     while not gamestate.game_over():
         for player in GameState.players:
