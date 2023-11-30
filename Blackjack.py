@@ -17,6 +17,7 @@ class GameState():
 
     def __init__(self):
         self.pot = 0
+        self.solo_game = False
 
     def add_player(self):
         while True:
@@ -61,12 +62,14 @@ class GameState():
     def return_bets(self, winners):
             try:
                 #Handle solo players getting a fair amount
-                if len(winners) == 1 and len(GameState.players) == 1:
+                if self.solo_game:
                     winners[0].wallet += (winners[0].get_bet() * 2)
                 else:
                     for p in winners:
                         p.wallet += round(self.pot / len(winners))
             except AttributeError:
+                pass
+            except IndexError:
                 pass
     
     def calculate_winner(self):
@@ -79,7 +82,7 @@ class GameState():
         #Check if all busted. Void round if all busted
         if len(non_busted_players_all) == 0:
             print("All busted! Round voided and bets returned!")
-            self.return_bets(GameState.players_all)
+            self.return_bets(GameState.players)
         #Check if only one player won
         elif len(non_busted_players_all) == 1:
             print(f"{non_busted_players_all[0].name} won the round! They win the pot!")
@@ -97,8 +100,7 @@ class GameState():
                     winners.append(p)
             winner_names = [p.name for p in winners]
             print(f"The following players won the round: {winner_names}. The pot will be split equally among them.")
-            self.return_bets(winners)
-            
+            self.return_bets([player for player in winners if not player.dealer])
 
     def clear_hands(self):
         self.pot = 0
@@ -112,9 +114,15 @@ class GameState():
         for p in GameState.players:
             if p.get_wallet() <= 0:
                 p.out = True
+                GameState.players_all.remove(p)
+                GameState.players.remove(p)
+    
+    def check_solo_game(self):
+        if len(GameState.players) == 1:
+            self.solo_game = True
 
     def game_over(self):
-        if all([player.out for player in GameState.players]):
+        if len(GameState.players) == 0:
             return True
         else:
             return False
@@ -127,6 +135,7 @@ class Person():
         self.hand = []
         self.bust = False
         self.stand = False
+        self.dealer = False
         GameState.players_all.append(self)
 
     def get_hand(self):
@@ -229,6 +238,7 @@ class Dealer(Person):
     def __init__(self):
         Person.__init__(self, "Dealer")
         self.hand = []
+        self.dealer = True
     
     def get_hand_half(self):
         return self.hand[1:]
@@ -248,19 +258,23 @@ class Dealer(Person):
     
     def turn_logic(self):
         print(f"Dealer's hand is: {self.get_hand()}")
-        while self.get_hand_value() < 17:
-            self.hit()
-        if self.get_hand_value() <= 21:
-            self.stay()
-        else:
-            print("Dealer busts!")
-            self.bust = True
+        while not self.bust:
+            #build list of players beating the dealer (but not busted!). If this list is NOT empty, then hit. If this list is empty, then stay and break out of loop.
+            beating_dealer = [player for player in GameState.players if player.get_hand_value() <= 21 and player.get_hand_value() > self.get_hand_value() ]
+            print(beating_dealer)
+            if beating_dealer != []:
+                self.hit()
+            else:
+                self.stay()
+                break
+        print("Dealer busts!")
 
 #Main
 def main():
     gamestate = GameState()
     gamestate.add_player()
     dealer = Dealer()
+    gamestate.check_solo_game()
 
     while not gamestate.game_over():
         for player in GameState.players:
@@ -276,4 +290,5 @@ def main():
         gamestate.calculate_winner()
         gamestate.clear_hands()
         gamestate.check_outs()
+        gamestate.check_solo_game()
 main()
