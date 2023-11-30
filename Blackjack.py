@@ -256,13 +256,16 @@ class Dealer(Person):
     
     def turn_logic(self):
         print(f"Dealer's hand is: {self.get_hand()}")
-        while self.get_hand_value() < 17:
-            self.hit()
-        if self.get_hand_value() <= 21:
-            self.stay()
-        else:
-            print("Dealer busts!")
-            self.bust = True
+        while not self.bust:
+            #build list of players beating the dealer (but not busted!). If this list is NOT empty, then hit. If this list is empty, then stay and break out of loop.
+            beating_dealer = [player for player in GameState.players if player.get_hand_value() <= 21 and player.get_hand_value() > self.get_hand_value() ]
+            print(beating_dealer)
+            if beating_dealer != []:
+                self.hit()
+            else:
+                self.stand()
+                break
+
 
 #Main
 def main():
