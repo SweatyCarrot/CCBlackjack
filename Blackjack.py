@@ -69,6 +69,8 @@ class GameState():
                         p.wallet += round(self.pot / len(winners))
             except AttributeError:
                 pass
+            except IndexError:
+                pass
     
     def calculate_winner(self):
         #Build list of non-busted players including dealer
@@ -263,9 +265,9 @@ class Dealer(Person):
             if beating_dealer != []:
                 self.hit()
             else:
-                self.stand()
+                self.stay()
                 break
-
+        print("Dealer busts!")
 
 #Main
 def main():
