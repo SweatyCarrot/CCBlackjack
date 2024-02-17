@@ -21,7 +21,7 @@ Until the player's wallet is empty
     Dealer attempts to beat the player
     Winner is determined and round is paid out
 
-There is no win condition. This is because !strikethrough!gambling is a one sided endeavor and the house always wins!strikethrough! I was too lazy to add one.
+There is no win condition. This is because ~~gambling is a one sided endeavor and the house always wins~~ I was too lazy to add one.
 
 There is nothing hard-coded for only one player. With the addition of a loop at line 275, the game would theoretically support multiple players. However, I did not try this as I knew it would open a whole new can of worms to troubleshoot, refactor, and attempt to perfect.
 
