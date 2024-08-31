@@ -49,7 +49,8 @@ class GameState():
         print(f"The dealer is showing [?]{dealer.get_hand_half()}")
     
     def reveal(self):
-        print("Results!")
+        sleep(0.5)
+        print("||| Results |||")
         for player in GameState.players_all:
             print(f"{player.name} has {player.get_hand()} with a value of {player.get_hand_value()}")
             sleep(0.5)
