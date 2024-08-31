@@ -30,7 +30,7 @@ class Player(person.Person):
         self.bet += value
 
     def take_bet(self):
-        print(f"Your current wallet is {self.get_wallet()}.")
+        print(f"Your current wallet is ${self.get_wallet()}.")
         while True:
                 bet_amount = input("Please enter your bet: $")
                 if bet_amount.isnumeric():
